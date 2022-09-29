@@ -1,0 +1,5 @@
+# Игнорировать все файлы в каталоге
+.buildozer/
+bin/
+venv/
+kivy_venv/
