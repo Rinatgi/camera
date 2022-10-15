@@ -1,24 +1,27 @@
+import datetime
 import os
 from kivy.core.image import Texture
 from kivy.utils import platform
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.scrollview import ScrollView
 import time
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.textinput import TextInput
 from kivy.core.camera import Camera
 from kivy.core.image import Image
 from android.permissions import Permission, request_permissions
+from android.storage import primary_external_storage_path
 
 
+__version__ = '0.1.2'
 class MenuScreen(Screen):
     def __init__(self, name):
         super().__init__()
         self.name = name
         self.texture: Texture = None
         self.box_menu = BoxLayout(orientation='vertical')
-        self.btn = Button(text='ghbvth')
         self.add_widget(self.box_menu)
 
 
@@ -26,20 +29,31 @@ class CameraScreen(Screen):
     def __init__(self, name):
         super().__init__()
         self.name = name
+        date_now = datetime.datetime.now()
+        self.year = date_now.strftime("%Y")
+        self.mouth = date_now.strftime("%B")
+        self.day = date_now.strftime("%d")
         if platform == 'android':
-            from android.storage import primary_external_storage_path
-            dir_path = primary_external_storage_path()
-            self.download_dir_path = os.path.join(dir_path, 'Download')
+            self.dir_path = primary_external_storage_path()
+            self.download_dir_path = os.path.join(self.dir_path, 'Download')
+            dcim_dir_path = os.path.join(self.dir_path, 'DCIM')
+            self.save_image_path = os.path.join(dcim_dir_path, 'Camera_Images', self.year, self.mouth, self.day)
+            if not os.path.exists(self.save_image_path):
+                os.makedirs(self.save_image_path, exist_ok=True)
         self.__place_widgets()
 
     def __place_widgets(self):
         self.box_camera = BoxLayout(orientation='vertical',)
+        self.log_box = BoxLayout()
+        self.text_log = TextInput()
+        self.scroll_view = ScrollView()
         self.button_play = Button(text='Play', on_press=self.capture)
         self.button_save = Button(text='Save foto', on_press=self.save_foto)
         self.add_widget(self.box_camera)
         self.box_camera.add_widget(self.button_play)
         self.box_camera.add_widget(self.button_save)
-        self.text = TextInput()
+        self.box_camera.add_widget(self.scroll_view)
+        self.scroll_view.add_widget(self.text_log)
 
     def capture(self, inst):
         camera = Camera(resolution=(640, 480))
@@ -51,7 +65,13 @@ class CameraScreen(Screen):
     def save_foto(self, button):
         timestr = time.strftime("%Y%m%d_%H%M%S")
         image = Image(self.texture)
-        image.save(self.download_dir_path + "IMG_{}.png".format(timestr))
+        date_dir_path = f'/{self.year}/{self.mouth}'
+        image.save(os.path.join(self.save_image_path, "IMG_{}.png".format(timestr)))
+        log_name = f'camapp{__version__}.log'
+        log_file_path = os.path.join(self.download_dir_path, log_name)
+        with open(log_file_path, 'a') as log_file:
+            log_file.write('\n'.join('rinat'))
+        self.text_log.text = f'Foto saved {self.save_image_path}\n'
 
 
 class MainScreen(ScreenManager):

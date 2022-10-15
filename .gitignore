@@ -3,3 +3,4 @@
 bin/
 venv/
 kivy_venv/
+.idea/
